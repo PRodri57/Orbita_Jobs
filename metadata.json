@@ -1,0 +1,6 @@
+{
+  "name": "Orbita Jobs",
+  "description": "Lleva el registro de tus postulaciones laborales, entrevistas y recordatorios de seguimiento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
