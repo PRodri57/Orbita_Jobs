@@ -46,9 +46,15 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         {/* Left balance spacer */}
         <div className="w-9" />
 
-        {/* Centered Title - NO LOGO, larger letters */}
-        <h1 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight text-center flex-1">
-          Orbita Jobs
+        {/* Centered brand */}
+        <h1 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight text-center flex-1 flex items-center justify-center gap-2.5">
+          <svg className="w-8 h-8 shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
+            <ellipse cx="16" cy="16" rx="14" ry="7" stroke="currentColor" strokeWidth="1.2" transform="rotate(-25 16 16)" />
+            <circle cx="16" cy="16" r="2.8" fill="currentColor" />
+            <circle cx="27" cy="12" r="1.5" fill="currentColor" />
+          </svg>
+          <span>Orbita Jobs</span>
         </h1>
 
         {/* Right action button */}
