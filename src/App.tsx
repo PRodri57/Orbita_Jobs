@@ -10,7 +10,8 @@ import {
   ViewMode,
   ReminderItem
 } from './types/job';
-import { loadApplications, saveApplications } from './utils/storage';
+import { useApplications } from './hooks/useApplications';
+import { CloudSyncBar } from './components/CloudSyncBar';
 import { INITIAL_JOB_APPLICATIONS } from './data/mockData';
 import { StarsBackground } from './components/StarsBackground';
 import { MobileHeader } from './components/MobileHeader';
@@ -23,7 +24,8 @@ import { MobileJobDetailModal } from './components/MobileJobDetailModal';
 import { EmailTemplateModal } from './components/EmailTemplateModal';
 
 export default function App() {
-  const [applications, setApplications] = useState<JobApplication[]>(() => loadApplications());
+  const sync = useApplications();
+  const { applications, setApplications } = sync;
   const [viewMode, setViewMode] = useState<ViewMode>('jobs');
 
   // Modals state
@@ -36,10 +38,13 @@ export default function App() {
   const [templateApp, setTemplateApp] = useState<JobApplication | null>(null);
   const [templateInitialKey, setTemplateInitialKey] = useState<string | undefined>(undefined);
 
-  // Sync with localStorage
   useEffect(() => {
-    saveApplications(applications);
-  }, [applications]);
+    setIsJobModalOpen(false);
+    setEditingApplication(null);
+    setSelectedApplicationForDetail(null);
+    setIsTemplatesModalOpen(false);
+    setTemplateApp(null);
+  }, [sync.user?.uid]);
 
   // Update selectedApplicationForDetail when applications list changes
   useEffect(() => {
@@ -60,7 +65,7 @@ export default function App() {
 
   // Handler: Save or Update Application
   const handleSaveApplication = (savedApp: JobApplication) => {
-    setApplications((prev) => {
+    return setApplications((prev) => {
       const exists = prev.some((a) => a.id === savedApp.id);
       if (exists) {
         return prev.map((a) => (a.id === savedApp.id ? savedApp : a));
@@ -129,7 +134,7 @@ export default function App() {
         if (app.id !== appId) return app;
         const newRem: ReminderItem = {
           ...reminder,
-          id: 'rem-' + Date.now()
+          id: 'rem-' + crypto.randomUUID()
         };
         return {
           ...app,
@@ -190,6 +195,8 @@ export default function App() {
 
       {/* Mobile Top Header (Centered Title, No Logo) */}
       <MobileHeader
+        canEdit={sync.canEdit}
+        synchronized={!!sync.user}
         applications={applications}
         onImportApplications={(imported) => setApplications(imported)}
         onResetData={handleResetData}
@@ -197,7 +204,10 @@ export default function App() {
 
       {/* Main Content Area - Mobile Optimized Width */}
       <main className="flex-1 max-w-md sm:max-w-xl md:max-w-2xl w-full mx-auto px-4 pt-4 pb-28 relative z-10">
-        {viewMode === 'jobs' && (
+        <CloudSyncBar sync={sync} />
+        {!sync.ready && <p className="py-8 text-center text-sm text-zinc-400" role="status">Cargando tus postulaciones…</p>}
+        <fieldset disabled={!sync.canEdit} className="min-w-0 disabled:opacity-60">
+        {sync.ready && viewMode === 'jobs' && (
           <SimplifiedJobsList
             applications={applications}
             onSelectApplication={(app) => setSelectedApplicationForDetail(app)}
@@ -206,7 +216,7 @@ export default function App() {
           />
         )}
 
-        {viewMode === 'interviews' && (
+        {sync.ready && viewMode === 'interviews' && (
           <SimplifiedInterviewsList
             applications={applications}
             onToggleInterview={handleToggleInterviewComplete}
@@ -215,7 +225,7 @@ export default function App() {
           />
         )}
 
-        {viewMode === 'reminders' && (
+        {sync.ready && viewMode === 'reminders' && (
           <SimplifiedRemindersList
             applications={applications}
             onToggleReminder={handleToggleReminder}
@@ -226,10 +236,11 @@ export default function App() {
             onSelectApplication={(app) => setSelectedApplicationForDetail(app)}
           />
         )}
+        </fieldset>
       </main>
 
       {/* Mobile Bottom Navigation Bar (Centered Add Button) */}
-      <BottomNav
+      {sync.canEdit && <BottomNav
         currentView={viewMode}
         onViewChange={setViewMode}
         onOpenNewModal={handleOpenCreateModal}
@@ -240,15 +251,16 @@ export default function App() {
         }}
         pendingRemindersCount={pendingRemindersCount}
         upcomingInterviewsCount={upcomingInterviewsCount}
-      />
+      />}
 
       {/* Modal: Create or Edit Job */}
-      <MobileJobModal
+      {isJobModalOpen && <MobileJobModal
+        key={editingApplication?.id || 'new'}
         isOpen={isJobModalOpen}
         onClose={() => setIsJobModalOpen(false)}
         onSave={handleSaveApplication}
         initialData={editingApplication}
-      />
+      />}
 
       {/* Modal: Job Details Viewer */}
       <MobileJobDetailModal
@@ -270,13 +282,13 @@ export default function App() {
       />
 
       {/* Modal: Email Templates */}
-      <EmailTemplateModal
+      {isTemplatesModalOpen && <EmailTemplateModal
         isOpen={isTemplatesModalOpen}
         onClose={() => setIsTemplatesModalOpen(false)}
         selectedApplication={templateApp}
         applications={applications}
         initialTemplateKey={templateInitialKey}
-      />
+      />}
     </div>
   );
 }

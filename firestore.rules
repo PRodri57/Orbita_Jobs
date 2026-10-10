@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/applications/{applicationId} {
+      function owner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function validDocument() {
+        let item = request.resource.data;
+        return item.keys().hasOnly(['data', 'deleted', 'revision', 'operationId', 'updatedAt'])
+          && item.deleted is bool
+          && item.revision is int && item.revision > 0
+          && item.operationId is string && item.operationId.size() <= 100
+          && item.updatedAt == request.time
+          && ((item.deleted == true && item.data == null)
+            || (item.deleted == false && item.data is map
+              && item.data.id == applicationId
+              && item.data.company is string && item.data.position is string
+              && item.data.status in ['draft', 'applied', 'review', 'interviewing', 'technical_test', 'offer', 'rejected', 'accepted', 'withdrawn']
+              && item.data.interviews is list && item.data.reminders is list
+              && item.data.createdAt is string && item.data.updatedAt is string));
+      }
+      allow read: if owner();
+      allow create: if owner() && validDocument() && request.resource.data.revision == 1;
+      allow update: if owner() && validDocument() && request.resource.data.revision == resource.data.revision + 1;
+      // Deletions leave an empty tombstone so offline devices cannot resurrect old records.
+      allow delete: if false;
+    }
+  }
+}

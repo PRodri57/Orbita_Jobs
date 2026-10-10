@@ -7,7 +7,7 @@ import { X, Video } from 'lucide-react';
 interface MobileJobModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (app: JobApplication) => void;
+  onSave: (app: JobApplication) => boolean;
   initialData?: JobApplication | null;
 }
 
@@ -48,7 +48,7 @@ export const MobileJobModal: React.FC<MobileJobModalProps> = ({
     const interviews = [...(initialData?.interviews || [])];
     if (hasInterview && interviewTitle.trim()) {
       interviews.push({
-        id: 'int-' + Date.now(),
+        id: 'int-' + crypto.randomUUID(),
         title: interviewTitle.trim(),
         date: interviewDate,
         time: interviewTime,
@@ -64,7 +64,7 @@ export const MobileJobModal: React.FC<MobileJobModalProps> = ({
       const d = new Date();
       d.setDate(d.getDate() + 7);
       reminders.push({
-        id: 'rem-' + Date.now(),
+        id: 'rem-' + crypto.randomUUID(),
         title: `Seguimiento de postulación en ${company.trim()}`,
         dueDate: d.toISOString().slice(0, 10),
         type: 'follow_up_status',
@@ -74,7 +74,7 @@ export const MobileJobModal: React.FC<MobileJobModalProps> = ({
     }
 
     const appToSave: JobApplication = {
-      id: initialData?.id || 'app-' + Date.now(),
+      id: initialData?.id || 'app-' + crypto.randomUUID(),
       company: company.trim(),
       position: position.trim(),
       location: initialData?.location || '',
@@ -96,8 +96,7 @@ export const MobileJobModal: React.FC<MobileJobModalProps> = ({
       updatedAt: new Date().toISOString()
     };
 
-    onSave(appToSave);
-    onClose();
+    if (onSave(appToSave)) onClose();
   };
 
   return (

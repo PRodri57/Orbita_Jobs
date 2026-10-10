@@ -5,14 +5,18 @@ import { exportApplicationsToCSV, exportApplicationsToJSON } from '../utils/stor
 
 interface MobileHeaderProps {
   applications: JobApplication[];
-  onImportApplications: (apps: JobApplication[]) => void;
+  onImportApplications: (apps: JobApplication[]) => boolean;
   onResetData: () => void;
+  canEdit: boolean;
+  synchronized: boolean;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
   applications,
   onImportApplications,
-  onResetData
+  onResetData,
+  canEdit,
+  synchronized
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -25,8 +29,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
-          onImportApplications(parsed);
-          alert(`Se importaron ${parsed.length} postulaciones con éxito.`);
+          if (synchronized && !confirm('Este respaldo reemplazará las postulaciones de tu cuenta y sincronizará el cambio con tus dispositivos. ¿Continuar?')) return;
+          if (onImportApplications(parsed)) alert(`Se incorporaron ${parsed.length} postulaciones. Los cambios pendientes aparecen en el estado de sincronización.`);
         }
       } catch {
         alert('Archivo no válido.');
@@ -83,6 +87,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 <span>Respaldo JSON</span>
               </button>
               <button
+                disabled={!canEdit}
                 onClick={() => {
                   fileInputRef.current?.click();
                   setShowMenu(false);
@@ -94,8 +99,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               </button>
               <hr className="my-1 border-[#373a43]" />
               <button
+                disabled={!canEdit}
                 onClick={() => {
-                  if (confirm('¿Restablecer datos a los ejemplos?')) {
+                  if (confirm(synchronized ? 'Esto reemplazará las postulaciones de tu cuenta por los ejemplos y sincronizará el cambio con tus dispositivos. ¿Continuar?' : '¿Restablecer datos a los ejemplos?')) {
                     onResetData();
                   }
                   setShowMenu(false);

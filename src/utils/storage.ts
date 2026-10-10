@@ -34,11 +34,13 @@ export function loadApplications(): JobApplication[] {
   }
 }
 
-export function saveApplications(apps: JobApplication[]): void {
+export function saveApplications(apps: JobApplication[]): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+    return true;
   } catch (err) {
     console.error('Error saving applications to localStorage', err);
+    return false;
   }
 }
 
