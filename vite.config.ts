@@ -5,6 +5,9 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // GitHub Pages serves this project under /Orbita_Jobs/; local and custom
+    // domain builds keep the default root path.
+    base: process.env.GITHUB_ACTIONS === 'true' ? '/Orbita_Jobs/' : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
